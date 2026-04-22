@@ -140,7 +140,7 @@ export default function CompanyPage() {
     setSuccess(false);
 
     try {
-      const res = await fetch('${process.env.NEXT_PUBLIC_API_URL}/company', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/company`, {
         method: companyExists ? "PUT" : "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

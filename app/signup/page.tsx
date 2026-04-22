@@ -42,7 +42,7 @@ export default function SignupPage() {
       await sendEmailVerification(user);
 
       // 3. Sync profile to your NestJS Backend
-      const res = await fetch('${process.env.NEXT_PUBLIC_API_URL}/auth/signup', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -93,7 +93,7 @@ export default function SignupPage() {
       const lastName = nameParts.slice(1).join(" ") || "";
 
       // Sync profile to backend (Mobile might be empty here, or you can prompt for it later)
-      const res = await fetch('${process.env.NEXT_PUBLIC_API_URL}/auth/signup', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

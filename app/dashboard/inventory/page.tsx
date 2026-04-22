@@ -74,7 +74,7 @@ export default function InventoryPage() {
   }, [search, category, startDate, endDate]); // 🟢 ADDED: Added dates to dependencies
 
   useEffect(() => {
-    fetch('${process.env.NEXT_PUBLIC_API_URL}/inventory/categories', {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/inventory/categories`, {
       credentials: "include",
     })
       .then(async (r) => {

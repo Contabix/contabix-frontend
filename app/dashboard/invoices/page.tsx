@@ -99,7 +99,7 @@ export default function InvoicesPage() {
   };
 
   useEffect(() => {
-    fetch('${process.env.NEXT_PUBLIC_API_URL}/invoice/bootstrap', {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/bootstrap`, {
       credentials: "include",
     })
       .then(async (r) => {
