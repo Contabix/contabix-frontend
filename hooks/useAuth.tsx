@@ -1,6 +1,7 @@
+// hooks/useAuth.tsx
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import { auth } from "@/lib/firebase"; 
 import { onAuthStateChanged, signOut } from "firebase/auth";
 
@@ -26,69 +27,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false); 
+  const syncLock = useRef(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
+      if (!firebaseUser) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      if (syncLock.current) return;
+
+      try {
+        syncLock.current = true;
         setIsSyncing(true); 
-        try {
-          const idToken = await firebaseUser.getIdToken();
+        const idToken = await firebaseUser.getIdToken();
 
-          // 1. Set the Cookie
-          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include", 
-            body: JSON.stringify({ idToken }),
-          });
+        // 1. Set the Cookie
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include", 
+          body: JSON.stringify({ idToken }),
+        });
 
-          // 2. Fetch User Profile from Database
-          let profileRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+        // 2. Fetch User Profile from Database
+        let profileRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+          method: "GET",
+          credentials: "include", 
+        });
+
+        // ⏳ THE FIX: If it fails, wait 1.5 seconds for the Signup save to finish, then retry!
+        if (!profileRes.ok) {
+          console.log("Database not ready, waiting for signup to finish...");
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          
+          profileRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
             method: "GET",
             credentials: "include", 
           });
-
-          // ⏳ THE FIX: If it fails, wait 1.5 seconds for the Signup save to finish, then retry!
-          if (!profileRes.ok) {
-            console.log("Database not ready, waiting for signup to finish...");
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            profileRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
-              method: "GET",
-              credentials: "include", 
-            });
-          }
-
-          if (profileRes.ok) {
-            const dbUser = await profileRes.json();
-            
-            setUser({
-              id: dbUser.id,
-              email: dbUser.email,
-              firstName: dbUser.firstName,
-              lastName: dbUser.lastName,
-              displayName: `${dbUser.firstName} ${dbUser.lastName}`, 
-            });
-          } else {
-            // Absolute fallback
-            setUser({
-              id: firebaseUser.uid,
-              email: null,
-              displayName: "User",
-            });
-          }
-
-        } catch (error) {
-          console.error("Backend sync failed:", error);
-          setUser(null);
-        } finally {
-          setIsSyncing(false); 
         }
-      } else {
+
+        if (profileRes.ok) {
+          const dbUser = await profileRes.json();
+          setUser({
+            id: dbUser.id,
+            email: dbUser.email,
+            firstName: dbUser.firstName,
+            lastName: dbUser.lastName,
+            displayName: `${dbUser.firstName} ${dbUser.lastName}`, 
+          });
+        } else {
+          // Absolute fallback removed so we don't trigger bad redirects
+          setUser(null);
+        }
+
+      } catch (error) {
+        console.error("Backend sync failed:", error);
         setUser(null);
-        setIsSyncing(false);
+      } finally {
+        setIsSyncing(false); 
+        syncLock.current = false;
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe(); 

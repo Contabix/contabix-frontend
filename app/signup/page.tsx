@@ -92,7 +92,7 @@ export default function SignupPage() {
       const firstName = nameParts[0] || "User";
       const lastName = nameParts.slice(1).join(" ") || "";
 
-      // Sync profile to backend (Mobile might be empty here, or you can prompt for it later)
+      // 1. Sync profile to backend
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -107,14 +107,20 @@ export default function SignupPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        // If user already exists in DB, that's fine, just push to dashboard
-        if (data.message === "User already exists in database") {
-          router.push("/dashboard");
-          return;
+        if (data.message !== "User already exists in database") {
+          await user.delete();
+          throw new Error(data.message || "Database synchronization failed");
         }
-        await user.delete();
-        throw new Error(data.message || "Database synchronization failed");
       }
+
+      // 2. IMPORTANT: Manually trigger Login to set the Cookie immediately
+      const idToken = await user.getIdToken();
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ idToken }),
+      });
 
       setSuccess("Google Sync complete! Redirecting...");
       setTimeout(() => router.push("/dashboard"), 1500);
