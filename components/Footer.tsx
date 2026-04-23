@@ -91,7 +91,7 @@ export default function Footer() {
                   <Mail size={16} className="text-amber-500 flex-shrink-0" />
                 </div>
                 <span className="text-neutral-400 hover:text-white transition-colors cursor-pointer">
-                  support@inventorypro.in
+                  support@contabix.in
                 </span>
               </li>
             </ul>
