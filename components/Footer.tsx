@@ -35,7 +35,7 @@ export default function Footer() {
                 <Package size={22} strokeWidth={2.5} />
               </div>
               <span className="text-2xl font-bold text-white tracking-tight">
-                Inventory<span className="text-amber-500">Pro</span>
+                Conta<span className="text-amber-500">bix</span>
               </span>
             </Link>
             <p className="text-sm text-neutral-500 leading-relaxed max-w-xs">

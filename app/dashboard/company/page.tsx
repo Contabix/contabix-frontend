@@ -167,7 +167,7 @@ export default function CompanyPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-neutral-500">
         <div className="animate-pulse mb-4 text-amber-500 font-bold">Synchronizing Session...</div>
-        <div className="text-sm">Connecting to InventoryPro Secure Engine</div>
+        <div className="text-sm">Connecting to Contabix Secure Engine</div>
       </div>
     );
   }
