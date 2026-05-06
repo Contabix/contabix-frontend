@@ -216,11 +216,10 @@ export default function CompanyPage() {
               value={form.type}
               onChange={(v) => updateForm("type", v)}
               options={[
-                { label: "Private Limited", value: "PRIVATE_LIMITED" },
-                { label: "Proprietorship", value: "PROPRIETORSHIP" },
-                { label: "LLP", value: "LLP" },
-                { label: "Partnership", value: "PARTNERSHIP" },
-                { label: "OPC", value: "OPC" },
+                { label: "Section-8 Company", value: "SECTION_8" },
+    { label: "Public/Private/OPC", value: "PUBLIC_PRIVATE_OPC" },
+    { label: "Society/Trust", value: "SOCIETY_TRUST" },
+    { label: "Company", value: "COMPANY" },
               ]}
             />
             <Input label="Business Category" value={form.businessCategory} onChange={(v) => updateForm("businessCategory", v)} />
