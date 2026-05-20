@@ -33,6 +33,11 @@ type Purchase = {
     phone?: string;
     address?: string;
     gstin?: string;
+    // 🔥 Added to type
+    city?: string;
+    state?: string;
+    stateCode?: string;
+    postalCode?: string;
   };
 };
 
@@ -74,6 +79,11 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
     supplierPhone: purchase.supplier.phone || "",
     supplierAddress: purchase.supplier.address || "",
     supplierGstin: purchase.supplierGstin || purchase.supplier.gstin || "",
+    // 🔥 Initializing new fields
+    supplierCity: purchase.supplier.city || "",
+    supplierState: purchase.supplier.state || "",
+    supplierStateCode: purchase.supplier.stateCode || "",
+    supplierPostal: purchase.supplier.postalCode || "",
   });
 
   const update = (key: string, value: string) => {
@@ -160,6 +170,17 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
                 <h3 className="text-sm font-semibold text-amber-500 uppercase tracking-wider mb-2">Supplier Info</h3>
                 <Input label="Supplier Name" value={form.supplierName} onChange={(v) => update("supplierName", v)} />
                 <Input label="Supplier GSTIN" value={form.supplierGstin} onChange={(v) => update("supplierGstin", v)} />
+                
+                {/* 🔥 Supplier Location inputs */}
+                <div className="grid grid-cols-2 gap-4">
+                  <Input label="City" value={form.supplierCity} onChange={(v) => update("supplierCity", v)} />
+                  <Input label="State" value={form.supplierState} onChange={(v) => update("supplierState", v)} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Input label="State Code" value={form.supplierStateCode} onChange={(v) => update("supplierStateCode", v)} />
+                  <Input label="Postal Code" value={form.supplierPostal} onChange={(v) => update("supplierPostal", v)} />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <Input label="Email" value={form.supplierEmail} onChange={(v) => update("supplierEmail", v)} />
                   <Input label="Phone" value={form.supplierPhone} onChange={(v) => update("supplierPhone", v)} />
