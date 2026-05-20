@@ -20,8 +20,8 @@ type Invoice = {
   invoiceNumber: number;
   issueDate: string;
   paymentMode?: "CASH" | "BANK";
-  placeOfSupply?: string; // 🟢 Added
-  remarks?: string;       // 🟢 Added
+  placeOfSupply?: string; 
+  remarks?: string;       
   customerId?: string;
   customerName?: string;
   customerEmail?: string;
@@ -32,6 +32,9 @@ type Invoice = {
   customerCountry?: string;
   customerPostal?: string;
   customerTaxId?: string;
+  // 🔥 NEW FIELDS
+  customerState?: string;
+  customerStateCode?: string;
   status: "DRAFT" | "PAID";
   items?: any[];
   tax?: number;
@@ -64,14 +67,17 @@ export default function CreateInvoiceModal({
   const [customerCountry, setCustomerCountry] = useState("");
   const [customerPostal, setCustomerPostal] = useState("");
   const [customerTaxId, setCustomerTaxId] = useState("");
+  // 🔥 NEW FIELDS
+  const [customerState, setCustomerState] = useState("");
+  const [customerStateCode, setCustomerStateCode] = useState("");
 
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   /* ========= INVOICE ========= */
   const [invoiceNumber, setInvoiceNumber] = useState(0);
   const [issueDate, setIssueDate] = useState("");
-  const [placeOfSupply, setPlaceOfSupply] = useState(""); // 🟢
-  const [remarks, setRemarks] = useState("");             // 🟢
+  const [placeOfSupply, setPlaceOfSupply] = useState(""); 
+  const [remarks, setRemarks] = useState("");             
   const [status, setStatus] = useState<"DRAFT" | "PAID">("DRAFT");
   const [paymentMode, setPaymentMode] = useState<"CASH" | "BANK">("CASH");
 
@@ -121,6 +127,9 @@ export default function CreateInvoiceModal({
         setCustomerCountry(invoice.customerCountry || "");
         setCustomerPostal(invoice.customerPostal || "");
         setCustomerTaxId(invoice.customerTaxId || "");
+        // 🔥 PRE-FILL
+        setCustomerState(invoice.customerState || "");
+        setCustomerStateCode(invoice.customerStateCode || "");
 
         setItems(
           invoice.items?.map((i: any) => ({
@@ -130,7 +139,7 @@ export default function CreateInvoiceModal({
             unit: i.unit || "PIECE", 
             sellingPrice: i.price || 0,
             discount: i.discount || 0, 
-            tax: i.tax || 0,           
+            tax: i.tax || 0,            
           })) ?? []
         );
       } else {
@@ -190,6 +199,10 @@ export default function CreateInvoiceModal({
     setCustomerCountry(c.country || "");
     setCustomerPostal(c.postalCode || "");
     setCustomerTaxId(c.taxId || "");
+    // 🔥 AUTO-FILL
+    setCustomerState(c.state || "");
+    setCustomerStateCode(c.stateCode || "");
+
     setShowSuggestions(false);
   };
 
@@ -225,6 +238,9 @@ export default function CreateInvoiceModal({
           customerCountry,
           customerPostal,
           customerTaxId,
+          // 🔥 SEND TO BACKEND
+          customerState,
+          customerStateCode,
 
           subTotal: subtotal,
           tax: 0,
@@ -240,7 +256,7 @@ export default function CreateInvoiceModal({
               quantity: i.quantity,
               unit: i.unit, 
               discount: i.discount, 
-              tax: i.tax,           
+              tax: i.tax,            
               total: i.sellingPrice * i.quantity,
             };
           }),
@@ -412,11 +428,18 @@ export default function CreateInvoiceModal({
               <Input label="Company Name" value={customerCompany} onChange={setCustomerCompany} placeholder="Optional" />
             </div>
             
+            {/* 🔥 NEW FIELDS INTEGRATED INTO GRID */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Input label="Address" value={customerAddress} onChange={setCustomerAddress} placeholder="Street address" />
               <Input label="City" value={customerCity} onChange={setCustomerCity} placeholder="City" />
+              <Input label="State" value={customerState} onChange={setCustomerState} placeholder="State" />
+              <Input label="State Code" value={customerStateCode} onChange={setCustomerStateCode} placeholder="e.g. 27" />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Input label="Postal Code" value={customerPostal} onChange={setCustomerPostal} placeholder="ZIP / PIN" />
               <Input label="GSTIN / Tax ID" value={customerTaxId} onChange={setCustomerTaxId} placeholder="Tax Number" />
+              <Input label="Country" value={customerCountry} onChange={setCustomerCountry} placeholder="India" />
             </div>
           </section>
 
@@ -572,7 +595,7 @@ export default function CreateInvoiceModal({
                       </div>
                     </div>
 
-                    {/* Split Breakdown mini-receipt (MATH UNCHANGED) */}
+                    {/* Split Breakdown mini-receipt */}
                     <div className="flex flex-wrap items-center justify-between gap-4 text-xs font-medium text-neutral-400 pt-4 border-t border-neutral-700/50">
                       <div>Base: <span className="text-neutral-300">₹{split.base.toFixed(2)}</span></div>
                       <div>Discount: <span className="text-emerald-400">-₹{split.discountAmount.toFixed(2)}</span></div>
