@@ -227,6 +227,10 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
                       <option value="GRAM">g</option>
                       <option value="LITER">Litre</option>
                       <option value="BOX">Box</option>
+                      <option value="BAG">Bag</option>
+                      <option value="TON">Ton</option>
+                      <option value="QTL">QTL</option>
+                      <option value="PKT">PKT</option>
                     </select>
                   </div>
                 </div>
