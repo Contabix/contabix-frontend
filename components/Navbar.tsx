@@ -16,9 +16,10 @@ export default function Navbar() {
 
   if (loading) return null;
 
-  // 🔥 THE FIX: Prioritize the real Database Name first!
-  const username = user?.displayName 
+  // 🔥 THE FIX: Prioritize Company Name, fallback to legacy First Name, then email
+  const username = user?.companyName
     || user?.firstName 
+    || user?.displayName 
     || (user?.email ? user.email.split('@')[0] : "User");
 
   return (
