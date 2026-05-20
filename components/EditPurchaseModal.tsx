@@ -33,7 +33,6 @@ type Purchase = {
     phone?: string;
     address?: string;
     gstin?: string;
-    // 🔥 Added to type
     city?: string;
     state?: string;
     stateCode?: string;
@@ -66,7 +65,6 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
     placeOfSupply: purchase.placeOfSupply || "",
     paymentMode: purchase.paymentMode || "CASH",
 
-    // Manual Manual Entry (pre-filled with existing)
     quantity: purchase.quantity ? String(purchase.quantity) : "",
     purchasePrice: purchase.purchasePrice ? String(purchase.purchasePrice) : "",
     taxableValue: purchase.taxableValue ? String(purchase.taxableValue) : "",
@@ -79,15 +77,34 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
     supplierPhone: purchase.supplier.phone || "",
     supplierAddress: purchase.supplier.address || "",
     supplierGstin: purchase.supplierGstin || purchase.supplier.gstin || "",
-    // 🔥 Initializing new fields
     supplierCity: purchase.supplier.city || "",
     supplierState: purchase.supplier.state || "",
     supplierStateCode: purchase.supplier.stateCode || "",
     supplierPostal: purchase.supplier.postalCode || "",
   });
 
+  /* ================= SMART UPDATE FUNCTION ================= */
   const update = (key: string, value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => {
+      const next = { ...prev, [key]: value };
+
+      // 🔥 AUTO-CALCULATION LOGIC
+      if (["quantity", "purchasePrice", "gstPercent"].includes(key)) {
+        const q = Number(next.quantity) || 0;
+        const r = Number(next.purchasePrice) || 0; // Rate
+        const g = Number(next.gstPercent) || 0;
+
+        const taxable = parseFloat((q * r).toFixed(2));
+        const gst = parseFloat((taxable * (g / 100)).toFixed(2));
+        const total = parseFloat((taxable + gst).toFixed(2));
+
+        next.taxableValue = taxable ? String(taxable) : "";
+        next.gstAmount = gst ? String(gst) : "";
+        next.total = total ? String(total) : "";
+      }
+
+      return next;
+    });
   };
 
   const save = async () => {
@@ -101,7 +118,7 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          // Converted exactly as user entered them
+          // Converted exactly as user entered/auto-calculated them
           quantity: Number(form.quantity) || 0,
           purchasePrice: Number(form.purchasePrice) || 0,
           taxableValue: Number(form.taxableValue) || 0,
@@ -126,7 +143,6 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
     <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="w-full max-w-4xl max-h-[90vh] flex flex-col bg-neutral-900 border border-neutral-800/60 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-neutral-800/60 bg-neutral-900/50">
           <div>
             <h2 className="text-xl font-bold text-white tracking-tight">Edit Purchase Bill</h2>
@@ -137,9 +153,7 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
           </button>
         </div>
 
-        {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             
             {/* LEFT COLUMN */}
@@ -171,7 +185,6 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
                 <Input label="Supplier Name" value={form.supplierName} onChange={(v) => update("supplierName", v)} />
                 <Input label="Supplier GSTIN" value={form.supplierGstin} onChange={(v) => update("supplierGstin", v)} />
                 
-                {/* 🔥 Supplier Location inputs */}
                 <div className="grid grid-cols-2 gap-4">
                   <Input label="City" value={form.supplierCity} onChange={(v) => update("supplierCity", v)} />
                   <Input label="State" value={form.supplierState} onChange={(v) => update("supplierState", v)} />
@@ -217,7 +230,7 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
               <div className="border-t border-neutral-800/60" />
 
               <section className="space-y-4">
-                <h3 className="text-sm font-semibold text-amber-500 uppercase tracking-wider mb-2">Pricing & Taxes (Manual)</h3>
+                <h3 className="text-sm font-semibold text-amber-500 uppercase tracking-wider mb-2">Pricing & Taxes (Auto-Calculated)</h3>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <Input label="Quantity" type="number" value={form.quantity} onChange={(v)=>update("quantity",v)} />
@@ -225,6 +238,7 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
+                  {/* Manual edits to these boxes are allowed and preserved! */}
                   <Input label="Taxable Value (₹)" type="number" value={form.taxableValue} onChange={(v)=>update("taxableValue",v)} />
                   <Input label="GST %" type="number" value={form.gstPercent} onChange={(v)=>update("gstPercent",v)} />
                 </div>
@@ -247,7 +261,6 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
           )}
         </div>
 
-        {/* Footer Actions */}
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-neutral-800/60 bg-neutral-900/50">
           <button onClick={onClose} className="px-5 py-2.5 font-medium text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-xl transition-colors">
             Cancel
