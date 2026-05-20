@@ -10,7 +10,8 @@ type User = {
   email: string | null;
   displayName?: string | null;
   firstName?: string | null; 
-  lastName?: string | null;  
+  lastName?: string | null;
+  companyName?: string | null; // 🔥 ADDED THIS
 };
 
 type AuthContextType = {
@@ -76,10 +77,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: dbUser.email,
             firstName: dbUser.firstName,
             lastName: dbUser.lastName,
-            displayName: `${dbUser.firstName} ${dbUser.lastName}`, 
+            companyName: dbUser.companyName, // 🔥 ADDED THIS
+            // Display name fallback (mostly for older accounts)
+            displayName: dbUser.companyName || `${dbUser.firstName} ${dbUser.lastName}`, 
           });
         } else {
-          // Absolute fallback removed so we don't trigger bad redirects
           setUser(null);
         }
 
