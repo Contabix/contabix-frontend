@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Truck, Mail, Phone, MapPin, AlertCircle } from "lucide-react";
+import { X, Truck, Mail, Phone, MapPin, AlertCircle, Hash, Building, Map } from "lucide-react";
 
 type Supplier = {
   id?: string;
@@ -9,6 +9,12 @@ type Supplier = {
   email?: string;
   phone?: string;
   address?: string;
+  // 🔥 Added to type
+  gstin?: string;
+  city?: string;
+  state?: string;
+  stateCode?: string;
+  postalCode?: string;
 };
 
 type Props = {
@@ -26,6 +32,14 @@ export default function EditSupplierModal({
   const [email, setEmail] = useState(supplier.email || "");
   const [phone, setPhone] = useState(supplier.phone || "");
   const [address, setAddress] = useState(supplier.address || "");
+  
+  // 🔥 New state fields
+  const [gstin, setGstin] = useState(supplier.gstin || "");
+  const [city, setCity] = useState(supplier.city || "");
+  const [state, setState] = useState(supplier.state || "");
+  const [stateCode, setStateCode] = useState(supplier.stateCode || "");
+  const [postalCode, setPostalCode] = useState(supplier.postalCode || "");
+  
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,6 +66,11 @@ export default function EditSupplierModal({
             email,
             phone,
             address,
+            gstin,
+            city,
+            state,
+            stateCode,
+            postalCode
           }),
         }
       );
@@ -72,7 +91,7 @@ export default function EditSupplierModal({
   return (
     <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div 
-        className="w-full max-w-lg bg-neutral-900 border border-neutral-800/60 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="w-full max-w-2xl bg-neutral-900 border border-neutral-800/60 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-neutral-800/60 bg-neutral-900/50">
@@ -96,38 +115,38 @@ export default function EditSupplierModal({
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-5">
+        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
           
           <div className="space-y-4">
-            <Input 
-              label="Supplier Name" 
-              icon={<Truck size={16} />}
-              value={name} 
-              placeholder="e.g. Acme Corp"
-              onChange={setName} 
-            />
+            <h3 className="text-sm font-semibold text-amber-500 uppercase tracking-wider mb-2">Core Info</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input label="Supplier Name" icon={<Truck size={16} />} value={name} placeholder="e.g. Acme Corp" onChange={setName} />
+              <Input label="GSTIN" icon={<Hash size={16} />} value={gstin} placeholder="22AAAAA0000A1Z5" onChange={setGstin} />
+            </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input 
-                label="Email Address" 
-                icon={<Mail size={16} />}
-                type="email"
-                value={email} 
-                placeholder="vendor@example.com"
-                onChange={setEmail} 
-              />
-              <Input 
-                label="Phone Number" 
-                icon={<Phone size={16} />}
-                value={phone} 
-                placeholder="+91..."
-                onChange={setPhone} 
-              />
+              <Input label="Email Address" icon={<Mail size={16} />} type="email" value={email} placeholder="vendor@example.com" onChange={setEmail} />
+              <Input label="Phone Number" icon={<Phone size={16} />} value={phone} placeholder="+91..." onChange={setPhone} />
+            </div>
+          </div>
+
+          <div className="border-t border-neutral-800/60" />
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-amber-500 uppercase tracking-wider mb-2">Location & Compliance</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input label="City" icon={<Building size={16} />} value={city} placeholder="e.g. Mumbai" onChange={setCity} />
+              <Input label="Postal/PIN Code" icon={<MapPin size={16} />} value={postalCode} placeholder="e.g. 400001" onChange={setPostalCode} />
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input label="State" icon={<Map size={16} />} value={state} placeholder="e.g. Maharashtra" onChange={setState} />
+              <Input label="State Code" icon={<Hash size={16} />} value={stateCode} placeholder="e.g. 27" onChange={setStateCode} />
             </div>
 
-            <div className="relative">
+            <div className="relative pt-2">
               <label className="block text-sm font-medium text-neutral-400 mb-1.5 ml-1">
-                Office Address
+                Full Street Address
               </label>
               <div className="relative">
                 <div className="absolute left-3 top-3 text-neutral-500">
@@ -136,8 +155,8 @@ export default function EditSupplierModal({
                 <textarea
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Full business address..."
-                  rows={3}
+                  placeholder="Street address, building, floor..."
+                  rows={2}
                   className="w-full bg-neutral-950/50 border border-neutral-800 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl pl-10 pr-4 py-2.5 text-white placeholder:text-neutral-700 transition-all outline-none shadow-inner resize-none"
                 />
               </div>
@@ -173,23 +192,7 @@ export default function EditSupplierModal({
   );
 }
 
-/* ================= HELPER INPUT COMPONENT ================= */
-
-function Input({
-  label,
-  value,
-  onChange,
-  icon,
-  type = "text",
-  placeholder = "",
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  icon?: React.ReactNode;
-  type?: string;
-  placeholder?: string;
-}) {
+function Input({ label, value, onChange, icon, type = "text", placeholder = "" }: { label: string; value: string; onChange: (v: string) => void; icon?: React.ReactNode; type?: string; placeholder?: string; }) {
   return (
     <div>
       <label className="block text-sm font-medium text-neutral-400 mb-1.5 ml-1">
