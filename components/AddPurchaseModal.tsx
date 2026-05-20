@@ -24,7 +24,7 @@ type Props = {
   onCreated: () => void;
 };
 
-type Unit = "PIECE" | "KILOGRAM" | "GRAM" | "LITER" | "MILLILITER" | "DOZEN" | "BOX";
+type Unit = "PIECE" | "KILOGRAM" | "GRAM" | "LITER" | "MILLILITER" | "DOZEN" | "BOX" | "BAG" | "TON" | "QTL" | "PKT";
 
 /* ================= COMPONENT ================= */
 
