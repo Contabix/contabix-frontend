@@ -12,6 +12,11 @@ type Supplier = {
   phone?: string;
   address?: string;
   gstin?: string;
+  // 🔥 NEW FIELDS
+  city?: string;
+  state?: string;
+  stateCode?: string;
+  postalCode?: string;
 };
 
 type Props = {
@@ -60,6 +65,11 @@ export default function AddPurchaseModal({ open, onClose, onCreated }: Props) {
     supplierPhone: "",
     supplierAddress: "",
     supplierGstin: "",
+    // 🔥 NEW FIELDS
+    supplierCity: "",
+    supplierState: "",
+    supplierStateCode: "",
+    supplierPostal: ""
   });
 
   /* ================= SUPPLIER SEARCH ================= */
@@ -126,6 +136,11 @@ export default function AddPurchaseModal({ open, onClose, onCreated }: Props) {
           supplierPhone: form.supplierPhone || undefined,
           supplierAddress: form.supplierAddress || undefined,
           supplierGstin: form.supplierGstin || undefined,
+          // 🔥 NEW FIELDS IN PAYLOAD
+          supplierCity: form.supplierCity || undefined,
+          supplierState: form.supplierState || undefined,
+          supplierStateCode: form.supplierStateCode || undefined,
+          supplierPostal: form.supplierPostal || undefined,
         }),
       });
 
@@ -215,7 +230,18 @@ export default function AddPurchaseModal({ open, onClose, onCreated }: Props) {
                         <div key={s.id} onClick={() => {
                             setSupplierQuery(s.name);
                             setSelectedSupplierId(s.id);
-                            setForm((f) => ({ ...f, supplierEmail: s.email ?? "", supplierPhone: s.phone ?? "", supplierAddress: s.address ?? "", supplierGstin: s.gstin ?? "" }));
+                            // 🔥 PRE-FILL INCLUDING NEW FIELDS
+                            setForm((f) => ({ 
+                              ...f, 
+                              supplierEmail: s.email ?? "", 
+                              supplierPhone: s.phone ?? "", 
+                              supplierAddress: s.address ?? "", 
+                              supplierGstin: s.gstin ?? "",
+                              supplierCity: s.city ?? "",
+                              supplierState: s.state ?? "",
+                              supplierStateCode: s.stateCode ?? "",
+                              supplierPostal: s.postalCode ?? ""
+                            }));
                           }}
                           className="px-4 py-3 cursor-pointer hover:bg-amber-500/10 transition-colors group"
                         >
@@ -228,6 +254,17 @@ export default function AddPurchaseModal({ open, onClose, onCreated }: Props) {
                 </div>
 
                 <Input label="Supplier GSTIN" value={form.supplierGstin} onChange={(v) => update("supplierGstin", v)} placeholder="22AAAAA0000A1Z5" />
+                
+                {/* 🔥 NEW LOCATION FIELDS MAINTAINING YOUR GRID */}
+                <div className="grid grid-cols-2 gap-4">
+                  <Input label="City" value={form.supplierCity} onChange={(v) => update("supplierCity", v)} placeholder="e.g. Mumbai" />
+                  <Input label="State" value={form.supplierState} onChange={(v) => update("supplierState", v)} placeholder="e.g. Maharashtra" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Input label="State Code" value={form.supplierStateCode} onChange={(v) => update("supplierStateCode", v)} placeholder="e.g. 27" />
+                  <Input label="Postal Code" value={form.supplierPostal} onChange={(v) => update("supplierPostal", v)} placeholder="e.g. 400001" />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <Input label="Email" value={form.supplierEmail} onChange={(v) => update("supplierEmail", v)} placeholder="supplier@example.com" />
                   <Input label="Phone" value={form.supplierPhone} onChange={(v) => update("supplierPhone", v)} placeholder="+91..." />
