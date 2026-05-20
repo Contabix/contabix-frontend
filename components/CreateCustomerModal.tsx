@@ -10,7 +10,8 @@ import {
   MapPin, 
   Hash, 
   Activity, 
-  ChevronDown 
+  ChevronDown,
+  Map 
 } from "lucide-react";
 
 type Customer = {
@@ -25,6 +26,9 @@ type Customer = {
   postalCode?: string;
   taxId?: string;
   status?: "ACTIVE" | "INACTIVE";
+  // 🔥 NEW FIELDS
+  state?: string;
+  stateCode?: string;
 };
 
 export default function CreateCustomerModal({
@@ -48,6 +52,9 @@ export default function CreateCustomerModal({
     postalCode: "",
     taxId: "",
     status: "ACTIVE",
+    // 🔥 NEW FIELDS
+    state: "",
+    stateCode: "",
   });
 
   /* ================= PREFILL FOR EDIT ================= */
@@ -65,6 +72,9 @@ export default function CreateCustomerModal({
         postalCode: customer.postalCode ?? "",
         taxId: customer.taxId ?? "",
         status: customer.status ?? "ACTIVE",
+        // 🔥 NEW FIELDS
+        state: customer.state ?? "",
+        stateCode: customer.stateCode ?? "",
       });
     }
   }, [customer]);
@@ -187,16 +197,11 @@ export default function CreateCustomerModal({
               placeholder="Full address details"
               onChange={(v) => setForm({ ...form, address: v })} 
             />
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input 
                 label="City" 
                 value={form.city || ""} 
                 onChange={(v) => setForm({ ...form, city: v })} 
-              />
-              <Input 
-                label="Country" 
-                value={form.country || ""} 
-                onChange={(v) => setForm({ ...form, country: v })} 
               />
               <Input 
                 label="Postal Code" 
@@ -205,25 +210,49 @@ export default function CreateCustomerModal({
               />
             </div>
             
-            <div className="pt-2">
-              <label className="block text-sm font-medium text-neutral-400 mb-1.5 ml-1">Account Status</label>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none">
-                  <Activity size={16} />
-                </div>
-                <select
-                  value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value as any })}
-                  className="w-full bg-neutral-900/50 border border-neutral-700/50 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl pl-10 pr-10 py-2.5 text-white transition-all outline-none shadow-inner cursor-pointer appearance-none"
-                >
-                  <option value="ACTIVE">Active</option>
-                  <option value="INACTIVE">Inactive</option>
-                </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none">
-                  <ChevronDown size={16} />
+            {/* 🔥 NEW FIELDS GRID */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input 
+                label="State" 
+                icon={<Map size={16} />}
+                value={form.state || ""} 
+                onChange={(v) => setForm({ ...form, state: v })} 
+              />
+              <Input 
+                label="State Code" 
+                icon={<Hash size={16} />}
+                value={form.stateCode || ""} 
+                onChange={(v) => setForm({ ...form, stateCode: v })} 
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input 
+                label="Country" 
+                value={form.country || ""} 
+                onChange={(v) => setForm({ ...form, country: v })} 
+              />
+              <div className="pt-2">
+                <label className="block text-sm font-medium text-neutral-400 mb-1.5 ml-1">Account Status</label>
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none">
+                    <Activity size={16} />
+                  </div>
+                  <select
+                    value={form.status}
+                    onChange={(e) => setForm({ ...form, status: e.target.value as any })}
+                    className="w-full bg-neutral-900/50 border border-neutral-700/50 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl pl-10 pr-10 py-2.5 text-white transition-all outline-none shadow-inner cursor-pointer appearance-none"
+                  >
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                  </select>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none">
+                    <ChevronDown size={16} />
+                  </div>
                 </div>
               </div>
             </div>
+
           </section>
         </div>
 
