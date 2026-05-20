@@ -109,7 +109,7 @@ export default function InventoryPage() {
   }, [search, category, load, hasCompany, startDate, endDate]); // 🟢 Make sure it refetches when FY changes
 
   const formatUnit = (u: string) => {
-    const map: any = { PIECE: 'Pcs', KILOGRAM: 'Kg', GRAM: 'g', LITER: 'Litre', BOX: 'Box' };
+    const map: any = { PIECE: 'Pcs', KILOGRAM: 'Kg', GRAM: 'g', LITER: 'Litre', BOX: 'Box', BAG: 'Bag', TON: 'Ton', QTL: 'QTL', PKT: 'PKT' };
     return map[u] || u;
   };
 
