@@ -88,15 +88,20 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
     setForm((prev) => {
       const next = { ...prev, [key]: value };
 
-      // 🔥 AUTO-CALCULATION LOGIC
+      // 🟢 REVERSE-ENGINEERED INCLUSIVE MATH
       if (["quantity", "purchasePrice", "gstPercent"].includes(key)) {
         const q = Number(next.quantity) || 0;
-        const r = Number(next.purchasePrice) || 0; // Rate
+        const r = Number(next.purchasePrice) || 0; // Inclusive Rate
         const g = Number(next.gstPercent) || 0;
 
-        const taxable = parseFloat((q * r).toFixed(2));
-        const gst = parseFloat((taxable * (g / 100)).toFixed(2));
-        const total = parseFloat((taxable + gst).toFixed(2));
+        // 1. Total is simply Qty * Rate
+        const total = parseFloat((q * r).toFixed(2));
+        
+        // 2. Extract base Taxable Value backward from the Total
+        const taxable = parseFloat((total / (1 + (g / 100))).toFixed(2));
+        
+        // 3. GST is the difference
+        const gst = parseFloat((total - taxable).toFixed(2));
 
         next.taxableValue = taxable ? String(taxable) : "";
         next.gstAmount = gst ? String(gst) : "";
