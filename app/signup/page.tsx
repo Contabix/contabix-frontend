@@ -16,8 +16,10 @@ import { Package, AlertCircle, CheckCircle2 } from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();
+  
+  // 🔥 Updated state to use companyName
   const [formData, setFormData] = useState({
-    firstName: "", lastName: "", email: "", mobile: "", password: "" 
+    companyName: "", email: "", mobile: "", password: "" 
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -46,10 +48,9 @@ export default function SignupPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
+          companyName: formData.companyName, // 🔥 Sending new field
           email: formData.email,
-          mobile: formData.mobile, // Now just standard info!
+          mobile: formData.mobile, 
           firebaseUid: user.uid 
         }),
       });
@@ -87,18 +88,15 @@ export default function SignupPage() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Split Google display name into First/Last
-      const nameParts = (user.displayName || "").split(" ");
-      const firstName = nameParts[0] || "User";
-      const lastName = nameParts.slice(1).join(" ") || "";
+      // 🔥 Use the Google Display Name directly as the company name
+      const companyName = user.displayName || "My Company";
 
       // 1. Sync profile to backend
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          firstName,
-          lastName,
+          companyName, // 🔥 Sending new field
           email: user.email,
           mobile: formData.mobile || "N/A", 
           firebaseUid: user.uid 
@@ -150,10 +148,9 @@ export default function SignupPage() {
           {success && <div className="text-emerald-400 bg-emerald-500/10 p-3 rounded-xl text-sm flex items-center gap-2"><CheckCircle2 size={16}/>{success}</div>}
 
           <form onSubmit={handleEmailSignup} className="space-y-4">
-            <div className="flex gap-4">
-              <input name="firstName" placeholder="First Name" onChange={handleChange} required className="w-full bg-neutral-950/50 border border-neutral-800 focus:border-amber-500/50 outline-none rounded-2xl px-4 py-3 text-white transition-colors" />
-              <input name="lastName" placeholder="Last Name" onChange={handleChange} required className="w-full bg-neutral-950/50 border border-neutral-800 focus:border-amber-500/50 outline-none rounded-2xl px-4 py-3 text-white transition-colors" />
-            </div>
+            {/* 🔥 Replaced First/Last name inputs with single Company Name input */}
+            <input name="companyName" placeholder="Company / Organization Name" onChange={handleChange} required className="w-full bg-neutral-950/50 border border-neutral-800 focus:border-amber-500/50 outline-none rounded-2xl px-4 py-3 text-white transition-colors" />
+            
             <input name="mobile" type="tel" placeholder="Mobile Number (Optional/Info)" onChange={handleChange} className="w-full bg-neutral-950/50 border border-neutral-800 focus:border-amber-500/50 outline-none rounded-2xl px-4 py-3 text-white transition-colors" />
             <input name="email" type="email" placeholder="Email Address" onChange={handleChange} required className="w-full bg-neutral-950/50 border border-neutral-800 focus:border-amber-500/50 outline-none rounded-2xl px-4 py-3 text-white transition-colors" />
             <input name="password" type="password" placeholder="Create a Password" onChange={handleChange} required minLength={6} className="w-full bg-neutral-950/50 border border-neutral-800 focus:border-amber-500/50 outline-none rounded-2xl px-4 py-3 text-white transition-colors" />
