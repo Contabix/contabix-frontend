@@ -198,7 +198,7 @@ export default function PurchasePage() {
   });
 
   const formatUnit = (u: string) => {
-    const map: any = { PIECE: 'Pcs', KILOGRAM: 'Kg', GRAM: 'g', LITER: 'L', BOX: 'Box' };
+    const map: any = { PIECE: 'Pcs', KILOGRAM: 'Kg', GRAM: 'g', LITER: 'L', BOX: 'Box', BAG: 'Bag', TON: 'Ton', QTL: 'QTL', PKT: 'PKT' };
     return map[u] || u;
   };
 
