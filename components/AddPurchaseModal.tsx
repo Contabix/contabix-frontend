@@ -12,7 +12,6 @@ type Supplier = {
   phone?: string;
   address?: string;
   gstin?: string;
-  // 🔥 NEW FIELDS
   city?: string;
   state?: string;
   stateCode?: string;
@@ -52,7 +51,7 @@ export default function AddPurchaseModal({ open, onClose, onCreated }: Props) {
     placeOfSupply: "",
     paymentMode: "CASH", 
 
-    // 100% Manual Entry
+    // Manual / Auto-Calculating Entry
     quantity: "",
     purchasePrice: "", // Rate
     taxableValue: "",
@@ -65,7 +64,6 @@ export default function AddPurchaseModal({ open, onClose, onCreated }: Props) {
     supplierPhone: "",
     supplierAddress: "",
     supplierGstin: "",
-    // 🔥 NEW FIELDS
     supplierCity: "",
     supplierState: "",
     supplierStateCode: "",
@@ -94,8 +92,29 @@ export default function AddPurchaseModal({ open, onClose, onCreated }: Props) {
 
   if (!open) return null;
 
+  /* ================= SMART UPDATE FUNCTION ================= */
   const update = (key: string, value: string) => {
-    setForm((f) => ({ ...f, [key]: value }));
+    setForm((prev) => {
+      const next = { ...prev, [key]: value };
+
+      // 🔥 AUTO-CALCULATION LOGIC
+      // If the user changes qty, rate, or tax, recalculate the amounts
+      if (["quantity", "purchasePrice", "gstPercent"].includes(key)) {
+        const q = Number(next.quantity) || 0;
+        const r = Number(next.purchasePrice) || 0; // Rate
+        const g = Number(next.gstPercent) || 0;
+
+        const taxable = parseFloat((q * r).toFixed(2));
+        const gst = parseFloat((taxable * (g / 100)).toFixed(2));
+        const total = parseFloat((taxable + gst).toFixed(2));
+
+        next.taxableValue = taxable ? String(taxable) : "";
+        next.gstAmount = gst ? String(gst) : "";
+        next.total = total ? String(total) : "";
+      }
+
+      return next;
+    });
   };
 
   /* ================= SAVE ================= */
@@ -122,7 +141,7 @@ export default function AddPurchaseModal({ open, onClose, onCreated }: Props) {
           paymentMode: form.paymentMode, 
           remarks: form.remarks,
 
-          // Saving exactly what the user typed (converted to numbers for DB)
+          // Saving exactly what the user typed or what was auto-calculated
           quantity: Number(form.quantity) || 0,
           purchasePrice: Number(form.purchasePrice) || 0,
           taxableValue: Number(form.taxableValue) || 0,
@@ -136,7 +155,6 @@ export default function AddPurchaseModal({ open, onClose, onCreated }: Props) {
           supplierPhone: form.supplierPhone || undefined,
           supplierAddress: form.supplierAddress || undefined,
           supplierGstin: form.supplierGstin || undefined,
-          // 🔥 NEW FIELDS IN PAYLOAD
           supplierCity: form.supplierCity || undefined,
           supplierState: form.supplierState || undefined,
           supplierStateCode: form.supplierStateCode || undefined,
@@ -230,7 +248,6 @@ export default function AddPurchaseModal({ open, onClose, onCreated }: Props) {
                         <div key={s.id} onClick={() => {
                             setSupplierQuery(s.name);
                             setSelectedSupplierId(s.id);
-                            // 🔥 PRE-FILL INCLUDING NEW FIELDS
                             setForm((f) => ({ 
                               ...f, 
                               supplierEmail: s.email ?? "", 
@@ -255,7 +272,6 @@ export default function AddPurchaseModal({ open, onClose, onCreated }: Props) {
 
                 <Input label="Supplier GSTIN" value={form.supplierGstin} onChange={(v) => update("supplierGstin", v)} placeholder="22AAAAA0000A1Z5" />
                 
-                {/* 🔥 NEW LOCATION FIELDS MAINTAINING YOUR GRID */}
                 <div className="grid grid-cols-2 gap-4">
                   <Input label="City" value={form.supplierCity} onChange={(v) => update("supplierCity", v)} placeholder="e.g. Mumbai" />
                   <Input label="State" value={form.supplierState} onChange={(v) => update("supplierState", v)} placeholder="e.g. Maharashtra" />
@@ -301,9 +317,9 @@ export default function AddPurchaseModal({ open, onClose, onCreated }: Props) {
 
               <div className="border-t border-neutral-800/60" />
 
-              {/* Taxation & Totals (MANUAL ENTRY) */}
+              {/* Taxation & Totals */}
               <section className="space-y-4">
-                <h3 className="text-sm font-semibold text-amber-500 uppercase tracking-wider mb-2">Pricing & Taxes (Manual)</h3>
+                <h3 className="text-sm font-semibold text-amber-500 uppercase tracking-wider mb-2">Pricing & Taxes (Auto-Calculated)</h3>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <Input label="Quantity *" type="number" value={form.quantity} onChange={(v)=>update("quantity",v)} placeholder="0" />
@@ -311,6 +327,7 @@ export default function AddPurchaseModal({ open, onClose, onCreated }: Props) {
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
+                  {/* Notice how these are standard inputs. They auto-fill, but the user can still overwrite them manually */}
                   <Input label="Taxable Value (₹)" type="number" value={form.taxableValue} onChange={(v)=>update("taxableValue",v)} placeholder="0.00" />
                   <Input label="GST %" type="number" value={form.gstPercent} onChange={(v)=>update("gstPercent",v)} placeholder="18" />
                 </div>
