@@ -53,7 +53,7 @@ export default function AddPurchaseModal({ open, onClose, onCreated }: Props) {
 
     // Manual / Auto-Calculating Entry
     quantity: "",
-    purchasePrice: "", // Rate
+    purchasePrice: "", // Treated as Final Inclusive Rate
     taxableValue: "",
     gstPercent: "",
     gstAmount: "",
@@ -97,16 +97,20 @@ export default function AddPurchaseModal({ open, onClose, onCreated }: Props) {
     setForm((prev) => {
       const next = { ...prev, [key]: value };
 
-      // 🔥 AUTO-CALCULATION LOGIC
-      // If the user changes qty, rate, or tax, recalculate the amounts
+      // 🟢 REVERSE-ENGINEERED INCLUSIVE MATH
       if (["quantity", "purchasePrice", "gstPercent"].includes(key)) {
         const q = Number(next.quantity) || 0;
-        const r = Number(next.purchasePrice) || 0; // Rate
+        const r = Number(next.purchasePrice) || 0; // Inclusive Rate
         const g = Number(next.gstPercent) || 0;
 
-        const taxable = parseFloat((q * r).toFixed(2));
-        const gst = parseFloat((taxable * (g / 100)).toFixed(2));
-        const total = parseFloat((taxable + gst).toFixed(2));
+        // 1. Total is simply Qty * Rate
+        const total = parseFloat((q * r).toFixed(2));
+        
+        // 2. Extract base Taxable Value backward from the Total
+        const taxable = parseFloat((total / (1 + (g / 100))).toFixed(2));
+        
+        // 3. GST is the difference
+        const gst = parseFloat((total - taxable).toFixed(2));
 
         next.taxableValue = taxable ? String(taxable) : "";
         next.gstAmount = gst ? String(gst) : "";
@@ -141,7 +145,6 @@ export default function AddPurchaseModal({ open, onClose, onCreated }: Props) {
           paymentMode: form.paymentMode, 
           remarks: form.remarks,
 
-          // Saving exactly what the user typed or what was auto-calculated
           quantity: Number(form.quantity) || 0,
           purchasePrice: Number(form.purchasePrice) || 0,
           taxableValue: Number(form.taxableValue) || 0,
@@ -327,7 +330,6 @@ export default function AddPurchaseModal({ open, onClose, onCreated }: Props) {
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Notice how these are standard inputs. They auto-fill, but the user can still overwrite them manually */}
                   <Input label="Taxable Value (₹)" type="number" value={form.taxableValue} onChange={(v)=>update("taxableValue",v)} placeholder="0.00" />
                   <Input label="GST %" type="number" value={form.gstPercent} onChange={(v)=>update("gstPercent",v)} placeholder="18" />
                 </div>
