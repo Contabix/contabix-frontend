@@ -3,11 +3,15 @@
 import { useEffect, useState } from "react";
 import { Plus, Trash2, X, Search, CheckCircle2, AlertCircle, Receipt } from "lucide-react";
 
+// 🔥 Imports reused from your Company Page for State selection
+import { getGSTStateCode } from "@/lib/gstStateCodes";
+import { GST_STATES } from "@/lib/gstStates";
+
 /* ================= TYPES ================= */
 
 type Item = {
   productId: string;
-  hsnSac?: string; // 🟢 Added
+  hsnSac?: string;
   quantity: number;
   unit: string;
   sellingPrice: number;
@@ -21,7 +25,7 @@ type Invoice = {
   issueDate: string;
   paymentMode?: "CASH" | "BANK";
   placeOfSupply?: string; 
-  remarks?: string;       
+  remarks?: string;        
   customerId?: string;
   customerName?: string;
   customerEmail?: string;
@@ -32,7 +36,6 @@ type Invoice = {
   customerCountry?: string;
   customerPostal?: string;
   customerTaxId?: string;
-  // 🔥 NEW FIELDS
   customerState?: string;
   customerStateCode?: string;
   status: "DRAFT" | "PAID";
@@ -67,7 +70,6 @@ export default function CreateInvoiceModal({
   const [customerCountry, setCustomerCountry] = useState("");
   const [customerPostal, setCustomerPostal] = useState("");
   const [customerTaxId, setCustomerTaxId] = useState("");
-  // 🔥 NEW FIELDS
   const [customerState, setCustomerState] = useState("");
   const [customerStateCode, setCustomerStateCode] = useState("");
 
@@ -77,7 +79,7 @@ export default function CreateInvoiceModal({
   const [invoiceNumber, setInvoiceNumber] = useState(0);
   const [issueDate, setIssueDate] = useState("");
   const [placeOfSupply, setPlaceOfSupply] = useState(""); 
-  const [remarks, setRemarks] = useState("");             
+  const [remarks, setRemarks] = useState("");              
   const [status, setStatus] = useState<"DRAFT" | "PAID">("DRAFT");
   const [paymentMode, setPaymentMode] = useState<"CASH" | "BANK">("CASH");
 
@@ -127,7 +129,6 @@ export default function CreateInvoiceModal({
         setCustomerCountry(invoice.customerCountry || "");
         setCustomerPostal(invoice.customerPostal || "");
         setCustomerTaxId(invoice.customerTaxId || "");
-        // 🔥 PRE-FILL
         setCustomerState(invoice.customerState || "");
         setCustomerStateCode(invoice.customerStateCode || "");
 
@@ -149,7 +150,7 @@ export default function CreateInvoiceModal({
     });
   }, [invoice]);
 
-  /* ================= CALCULATIONS (UNCHANGED) ================= */
+  /* ================= CALCULATIONS ================= */
 
   const calculateSplit = (item: Item) => {
     const final = item.sellingPrice * item.quantity;
@@ -199,11 +200,20 @@ export default function CreateInvoiceModal({
     setCustomerCountry(c.country || "");
     setCustomerPostal(c.postalCode || "");
     setCustomerTaxId(c.taxId || "");
-    // 🔥 AUTO-FILL
+    
+    // Auto-fill state data if it exists, otherwise leave blank for manual entry
     setCustomerState(c.state || "");
     setCustomerStateCode(c.stateCode || "");
+    
+    // 🔥 PER REQUEST: Place of supply is left alone so user can fill manually
+    // setPlaceOfSupply(c.state || "");
 
     setShowSuggestions(false);
+  };
+
+  const handleStateChange = (val: string) => {
+    setCustomerState(val);
+    setCustomerStateCode(getGSTStateCode(val));
   };
 
   const filteredCustomers = customers.filter((c) =>
@@ -221,7 +231,7 @@ export default function CreateInvoiceModal({
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          invoiceNumber,
+          invoiceNumber: Number(invoiceNumber),
           issueDate,
           status,
           paymentMode,
@@ -238,7 +248,6 @@ export default function CreateInvoiceModal({
           customerCountry,
           customerPostal,
           customerTaxId,
-          // 🔥 SEND TO BACKEND
           customerState,
           customerStateCode,
 
@@ -428,12 +437,12 @@ export default function CreateInvoiceModal({
               <Input label="Company Name" value={customerCompany} onChange={setCustomerCompany} placeholder="Optional" />
             </div>
             
-            {/* 🔥 NEW FIELDS INTEGRATED INTO GRID */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Input label="Address" value={customerAddress} onChange={setCustomerAddress} placeholder="Street address" />
               <Input label="City" value={customerCity} onChange={setCustomerCity} placeholder="City" />
-              <Input label="State" value={customerState} onChange={setCustomerState} placeholder="State" />
-              <Input label="State Code" value={customerStateCode} onChange={setCustomerStateCode} placeholder="e.g. 27" />
+              {/* 🔥 REPLACED STATE INPUT WITH STATESELECTOR */}
+              <StateSelector value={customerState} onChange={handleStateChange} />
+              <Input label="State Code" value={customerStateCode} onChange={setCustomerStateCode} placeholder="e.g. 27" disabled />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -482,6 +491,7 @@ export default function CreateInvoiceModal({
                           className="w-full bg-neutral-900/50 border border-neutral-700/50 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-3 py-2 text-sm text-white transition-all outline-none shadow-inner cursor-pointer"
                         >
                           <option value="">Select product</option>
+                          <option value="manual">Manual Entry</option>
                           {products.map((p) => (
                             <option key={p.id} value={p.id}>{p.name}</option>
                           ))}
@@ -649,7 +659,7 @@ export default function CreateInvoiceModal({
   );
 }
 
-/* ================= INPUT COMPONENT ================= */
+/* ================= COMPONENT HELPERS ================= */
 
 function Input({
   label,
@@ -657,12 +667,14 @@ function Input({
   onChange,
   type = "text",
   placeholder = "",
+  disabled = false,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
   placeholder?: string;
+  disabled?: boolean;
 }) {
   return (
     <div>
@@ -674,8 +686,67 @@ function Input({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-neutral-900/50 border border-neutral-700/50 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-4 py-2.5 text-white placeholder:text-neutral-600 transition-all outline-none shadow-inner"
+        disabled={disabled}
+        className="w-full bg-neutral-900/50 border border-neutral-700/50 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-4 py-2.5 text-white placeholder:text-neutral-600 transition-all outline-none shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
       />
+    </div>
+  );
+}
+
+function StateSelector({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [query, setQuery] = useState(value);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setQuery(value);
+  }, [value]);
+
+  const filtered = GST_STATES.filter((state) =>
+    state.toLowerCase().includes(query.toLowerCase())
+  );
+
+  return (
+    <div className="relative">
+      <label className="block text-sm font-medium text-neutral-400 mb-1.5">State</label>
+      <input
+        value={query}
+        onFocus={() => setOpen(true)}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setOpen(true);
+        }}
+        onBlur={() => {
+          setTimeout(() => setOpen(false), 200);
+        }}
+        placeholder="Search state..."
+        className="w-full bg-neutral-900/50 border border-neutral-700/50 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-4 py-2.5 text-white transition-all outline-none shadow-inner"
+      />
+
+      {open && filtered.length > 0 && (
+        <div className="absolute z-20 mt-2 w-full bg-neutral-800 border border-neutral-700 rounded-xl max-h-52 overflow-y-auto shadow-xl shadow-black/50 p-1 custom-scrollbar">
+          {filtered.map((state) => (
+            <button
+              key={state}
+              type="button"
+              onMouseDown={(e) => e.preventDefault()} 
+              onClick={() => {
+                setQuery(state);
+                onChange(state);
+                setOpen(false);
+              }}
+              className="w-full text-left px-4 py-2.5 hover:bg-neutral-700 rounded-lg text-sm text-neutral-200 transition-colors"
+            >
+              {state}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
