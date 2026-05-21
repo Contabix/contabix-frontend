@@ -388,7 +388,11 @@ export default function PurchasePage() {
                         <td className="px-4 py-3 text-neutral-400 text-xs">{p.supplierGstin || "-"}</td>
                         <td className="px-4 py-3 text-neutral-400">{p.placeOfSupply || "-"}</td>
                         
-                        <td className="px-4 py-3 text-white font-medium">{item.product?.name || "-"}</td>
+                        <td className="px-4 py-3 text-white font-medium">
+  {p.items?.length === 1
+    ? p.items[0]?.product?.name
+    : `${p.items?.[0]?.product?.name} +${p.items.length - 1} more`}
+</td>
                         <td className="px-4 py-3 text-neutral-400 text-xs">{item.hsnSac || "-"}</td>
                         <td className="px-4 py-3 text-center font-medium text-neutral-200">
                           {item.quantity} <span className="text-neutral-500 text-[10px]">{formatUnit(item.product?.unit)}</span>
