@@ -11,7 +11,7 @@ import { GST_STATES } from "@/lib/gstStates";
 
 type Item = {
   productId: string;
-  hsnSac?: string;
+  hsnSac?: string; // 🟢 Added
   quantity: number;
   unit: string;
   sellingPrice: number;
@@ -36,6 +36,7 @@ type Invoice = {
   customerCountry?: string;
   customerPostal?: string;
   customerTaxId?: string;
+  // 🔥 NEW FIELDS
   customerState?: string;
   customerStateCode?: string;
   status: "DRAFT" | "PAID";
@@ -70,6 +71,7 @@ export default function CreateInvoiceModal({
   const [customerCountry, setCustomerCountry] = useState("");
   const [customerPostal, setCustomerPostal] = useState("");
   const [customerTaxId, setCustomerTaxId] = useState("");
+  // 🔥 NEW FIELDS
   const [customerState, setCustomerState] = useState("");
   const [customerStateCode, setCustomerStateCode] = useState("");
 
@@ -94,17 +96,12 @@ export default function CreateInvoiceModal({
       // 🔥 Fetching directly from products instead of purchases
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/product`, { credentials: "include" })
         .then((r) => r.json())
-        .then((data) => {
-          const productList = Array.isArray(data) ? data : data.data || [];
-          return productList.map((p: any) => ({
+        .then((productsData) => {
+          return productsData.map((p: any) => ({
             id: p.id,
             name: p.name,
             price: p.price, 
           }));
-        })
-        .catch((err) => {
-          console.error("Failed to fetch products:", err);
-          return [];
         }),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/customers`, { credentials: "include" }).then((r) => r.json()),
     ]).then(([meta, productsData, customersData]) => {
@@ -129,6 +126,7 @@ export default function CreateInvoiceModal({
         setCustomerCountry(invoice.customerCountry || "");
         setCustomerPostal(invoice.customerPostal || "");
         setCustomerTaxId(invoice.customerTaxId || "");
+        // 🔥 PRE-FILL
         setCustomerState(invoice.customerState || "");
         setCustomerStateCode(invoice.customerStateCode || "");
 
@@ -150,7 +148,7 @@ export default function CreateInvoiceModal({
     });
   }, [invoice]);
 
-  /* ================= CALCULATIONS ================= */
+  /* ================= CALCULATIONS (UNCHANGED) ================= */
 
   const calculateSplit = (item: Item) => {
     const final = item.sellingPrice * item.quantity;
@@ -200,6 +198,7 @@ export default function CreateInvoiceModal({
     setCustomerCountry(c.country || "");
     setCustomerPostal(c.postalCode || "");
     setCustomerTaxId(c.taxId || "");
+    // 🔥 AUTO-FILL
     setCustomerState(c.state || "");
     setCustomerStateCode(c.stateCode || "");
 
@@ -226,7 +225,7 @@ export default function CreateInvoiceModal({
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          invoiceNumber: Number(invoiceNumber),
+          invoiceNumber,
           issueDate,
           status,
           paymentMode,
@@ -243,6 +242,7 @@ export default function CreateInvoiceModal({
           customerCountry,
           customerPostal,
           customerTaxId,
+          // 🔥 SEND TO BACKEND
           customerState,
           customerStateCode,
 
@@ -432,9 +432,11 @@ export default function CreateInvoiceModal({
               <Input label="Company Name" value={customerCompany} onChange={setCustomerCompany} placeholder="Optional" />
             </div>
             
+            {/* 🔥 NEW FIELDS INTEGRATED INTO GRID */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Input label="Address" value={customerAddress} onChange={setCustomerAddress} placeholder="Street address" />
               <Input label="City" value={customerCity} onChange={setCustomerCity} placeholder="City" />
+              {/* 🔥 STATE SELECTOR USED HERE */}
               <StateSelector value={customerState} onChange={handleStateChange} />
               <Input label="State Code" value={customerStateCode} onChange={setCustomerStateCode} placeholder="e.g. 27" disabled={true} />
             </div>
@@ -484,7 +486,8 @@ export default function CreateInvoiceModal({
                           }}
                           className="w-full bg-neutral-900/50 border border-neutral-700/50 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-3 py-2 text-sm text-white transition-all outline-none shadow-inner cursor-pointer"
                         >
-                          <option value="" disabled>Select product</option>
+                          <option value="">Select product</option>
+                          <option value="manual">Manual Entry</option>
                           {products.map((p) => (
                             <option key={p.id} value={p.id}>{p.name}</option>
                           ))}
