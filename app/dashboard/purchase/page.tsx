@@ -147,9 +147,10 @@ export default function PurchasePage() {
     );
   });
 
-  const flatRows = filteredPurchases.flatMap((p) => 
-    p.items?.map((item) => ({ purchase: p, item })) || []
-  );
+  const flatRows = filteredPurchases.map((p) => ({
+  purchase: p,
+  item: p.items?.[0] || null,
+}));
 
   const exportToExcel = () => {
     const headers = [
