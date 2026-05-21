@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { X, Truck, Mail, Phone, MapPin, AlertCircle, Hash, Building, Map } from "lucide-react";
+import { GST_STATES } from "@/lib/gstStates";
+import { getGSTStateCode } from "@/lib/gstStateCodes";
 
 type Supplier = {
   id?: string;
@@ -43,6 +45,10 @@ export default function EditSupplierModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const handleStateChange = (val: string) => {
+  setState(val);
+  setStateCode(getGSTStateCode(val));
+};
   const save = async () => {
     if (!name.trim()) {
       setError("Supplier name is required");
@@ -140,9 +146,19 @@ export default function EditSupplierModal({
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input label="State" icon={<Map size={16} />} value={state} placeholder="e.g. Maharashtra" onChange={setState} />
-              <Input label="State Code" icon={<Hash size={16} />} value={stateCode} placeholder="e.g. 27" onChange={setStateCode} />
-            </div>
+  <StateSelector
+    value={state}
+    onChange={handleStateChange}
+  />
+
+  <Input
+    label="State Code"
+    icon={<Hash size={16} />}
+    value={stateCode}
+    placeholder="Auto-filled"
+    onChange={setStateCode}
+  />
+</div>
 
             <div className="relative pt-2">
               <label className="block text-sm font-medium text-neutral-400 mb-1.5 ml-1">
@@ -212,6 +228,66 @@ function Input({ label, value, onChange, icon, type = "text", placeholder = "" }
           className={`w-full bg-neutral-950/50 border border-neutral-800 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl ${icon ? 'pl-10' : 'pl-4'} pr-4 py-2.5 text-white placeholder:text-neutral-700 transition-all outline-none shadow-inner`}
         />
       </div>
+    </div>
+  );
+}
+function StateSelector({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [query, setQuery] = useState(value);
+  const [open, setOpen] = useState(false);
+
+  useState(() => {
+    setQuery(value);
+  });
+
+  const filtered = GST_STATES.filter((state) =>
+    state.toLowerCase().includes(query.toLowerCase())
+  );
+
+  return (
+    <div className="relative">
+      <label className="block text-sm font-medium text-neutral-400 mb-1.5 ml-1">
+        State
+      </label>
+
+      <input
+        value={query}
+        onFocus={() => setOpen(true)}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setOpen(true);
+        }}
+        onBlur={() => {
+          setTimeout(() => setOpen(false), 200);
+        }}
+        placeholder="Search state..."
+        className="w-full bg-neutral-950/50 border border-neutral-800 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-4 py-2.5 text-white placeholder:text-neutral-700 transition-all outline-none shadow-inner"
+      />
+
+      {open && filtered.length > 0 && (
+        <div className="absolute z-20 mt-2 w-full bg-neutral-800 border border-neutral-700 rounded-xl max-h-52 overflow-y-auto shadow-xl shadow-black/50 p-1 custom-scrollbar">
+          {filtered.map((state) => (
+            <button
+              key={state}
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                setQuery(state);
+                onChange(state);
+                setOpen(false);
+              }}
+              className="w-full text-left px-4 py-2.5 hover:bg-neutral-700 rounded-lg text-sm text-neutral-200 transition-colors"
+            >
+              {state}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
