@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { X, Search, CheckCircle2, AlertCircle, Plus, Trash2 } from "lucide-react";
-import { getGSTStateCode } from "@/lib/gstStateCodes";
+import {
+  getGSTStateCode,
+  GST_STATE_CODES,
+} from "@/lib/gstStateCodes";
+
+import { GST_STATES } from "@/lib/gstStates";
 
 type Supplier = {
   id: string;
@@ -134,12 +139,9 @@ export default function AddPurchaseModal({
       const next = { ...prev, [key]: value };
 
       if (key === "supplierState") {
-        const normalized = value.trim().toLowerCase();
-        const found = Object.entries(getGSTStateCode).find(
-          ([state]) => state.toLowerCase() === normalized
-        );
-        next.supplierStateCode = found ? found[1] : "";
-      }
+  next.supplierStateCode =
+    getGSTStateCode(value);
+}
 
       if (key === "supplierGstin") {
         const gstin = value.trim();
@@ -409,21 +411,23 @@ export default function AddPurchaseModal({
                   onChange={(v) => updateHeader("supplierCity", v)}
                   placeholder="e.g. Mumbai"
                 />
-                <Input
-                  label="State"
-                  value={form.supplierState}
-                  onChange={(v) => updateHeader("supplierState", v)}
-                  placeholder="e.g. Maharashtra"
-                />
+                <StateSelector
+  value={form.supplierState}
+  onChange={(v) =>
+    updateHeader("supplierState", v)
+  }
+/>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <Input
-                  label="State Code"
-                  value={form.supplierStateCode}
-                  onChange={(v) => updateHeader("supplierStateCode", v)}
-                  placeholder="e.g. 27"
-                />
+  label="State Code"
+  value={form.supplierStateCode}
+  onChange={(v) =>
+    updateHeader("supplierStateCode", v)
+  }
+  placeholder="Auto-filled"
+/>
                 <Input
                   label="Postal Code"
                   value={form.supplierPostal}
@@ -629,6 +633,70 @@ function Input({
         placeholder={placeholder}
         className="w-full bg-neutral-900/50 border border-neutral-700/50 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-4 py-2.5 text-white placeholder:text-neutral-600 transition-all outline-none shadow-inner"
       />
+    </div>
+  );
+}
+function StateSelector({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [query, setQuery] = useState(value);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setQuery(value);
+  }, [value]);
+
+  const filtered = GST_STATES.filter((state) =>
+    state.toLowerCase().includes(
+      query.toLowerCase()
+    )
+  );
+
+  return (
+    <div className="relative">
+      <label className="block text-sm font-medium text-neutral-400 mb-1.5 truncate">
+        State
+      </label>
+
+      <input
+        value={query}
+        onFocus={() => setOpen(true)}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setOpen(true);
+        }}
+        onBlur={() =>
+          setTimeout(() => setOpen(false), 200)
+        }
+        placeholder="Search state..."
+        className="w-full bg-neutral-900/50 border border-neutral-700/50 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-4 py-2.5 text-white placeholder:text-neutral-600 transition-all outline-none shadow-inner"
+      />
+
+      {open && filtered.length > 0 && (
+        <div className="absolute z-20 mt-2 w-full bg-neutral-800 border border-neutral-700 rounded-xl shadow-xl overflow-hidden max-h-52 overflow-y-auto">
+          {filtered.map((state) => (
+            <button
+              key={state}
+              type="button"
+              onMouseDown={(e) =>
+                e.preventDefault()
+              }
+              onClick={() => {
+                setQuery(state);
+                onChange(state);
+                setOpen(false);
+              }}
+              className="w-full text-left px-4 py-2.5 hover:bg-amber-500/10 text-sm text-neutral-200"
+            >
+              {state}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
