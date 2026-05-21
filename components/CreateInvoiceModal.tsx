@@ -25,7 +25,7 @@ type Invoice = {
   issueDate: string;
   paymentMode?: "CASH" | "BANK";
   placeOfSupply?: string; 
-  remarks?: string;        
+  remarks?: string;       
   customerId?: string;
   customerName?: string;
   customerEmail?: string;
@@ -79,7 +79,7 @@ export default function CreateInvoiceModal({
   const [invoiceNumber, setInvoiceNumber] = useState(0);
   const [issueDate, setIssueDate] = useState("");
   const [placeOfSupply, setPlaceOfSupply] = useState(""); 
-  const [remarks, setRemarks] = useState("");              
+  const [remarks, setRemarks] = useState("");             
   const [status, setStatus] = useState<"DRAFT" | "PAID">("DRAFT");
   const [paymentMode, setPaymentMode] = useState<"CASH" | "BANK">("CASH");
 
@@ -91,20 +91,15 @@ export default function CreateInvoiceModal({
   useEffect(() => {
     Promise.all([
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/meta`, { credentials: "include" }).then((r) => r.json()),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/purchase`, { credentials: "include" })
+      // 🔥 FIX: Fetching directly from products instead of purchases
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/product`, { credentials: "include" })
         .then((r) => r.json())
-        .then((purchases) => {
-          const map = new Map();
-          purchases.forEach((p: any) => {
-            if (p.product) {
-              map.set(p.product.id, {
-                id: p.product.id,
-                name: p.product.name,
-                price: p.purchasePrice, 
-              });
-            }
-          });
-          return Array.from(map.values());
+        .then((productsData) => {
+          return productsData.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            price: p.price, 
+          }));
         }),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/customers`, { credentials: "include" }).then((r) => r.json()),
     ]).then(([meta, productsData, customersData]) => {
@@ -150,7 +145,7 @@ export default function CreateInvoiceModal({
     });
   }, [invoice]);
 
-  /* ================= CALCULATIONS ================= */
+  /* ================= CALCULATIONS (UNCHANGED) ================= */
 
   const calculateSplit = (item: Item) => {
     const final = item.sellingPrice * item.quantity;
@@ -200,13 +195,8 @@ export default function CreateInvoiceModal({
     setCustomerCountry(c.country || "");
     setCustomerPostal(c.postalCode || "");
     setCustomerTaxId(c.taxId || "");
-    
-    // Auto-fill state data if it exists, otherwise leave blank for manual entry
     setCustomerState(c.state || "");
     setCustomerStateCode(c.stateCode || "");
-    
-    // 🔥 PER REQUEST: Place of supply is left alone so user can fill manually
-    // setPlaceOfSupply(c.state || "");
 
     setShowSuggestions(false);
   };
@@ -440,9 +430,8 @@ export default function CreateInvoiceModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Input label="Address" value={customerAddress} onChange={setCustomerAddress} placeholder="Street address" />
               <Input label="City" value={customerCity} onChange={setCustomerCity} placeholder="City" />
-              {/* 🔥 REPLACED STATE INPUT WITH STATESELECTOR */}
               <StateSelector value={customerState} onChange={handleStateChange} />
-              <Input label="State Code" value={customerStateCode} onChange={setCustomerStateCode} placeholder="e.g. 27" disabled />
+              <Input label="State Code" value={customerStateCode} onChange={setCustomerStateCode} placeholder="e.g. 27" disabled={true} />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
