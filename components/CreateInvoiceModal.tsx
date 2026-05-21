@@ -91,15 +91,20 @@ export default function CreateInvoiceModal({
   useEffect(() => {
     Promise.all([
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/meta`, { credentials: "include" }).then((r) => r.json()),
-      // 🔥 FIX: Fetching directly from products instead of purchases
+      // 🔥 Fetching directly from products instead of purchases
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/product`, { credentials: "include" })
         .then((r) => r.json())
-        .then((productsData) => {
-          return productsData.map((p: any) => ({
+        .then((data) => {
+          const productList = Array.isArray(data) ? data : data.data || [];
+          return productList.map((p: any) => ({
             id: p.id,
             name: p.name,
             price: p.price, 
           }));
+        })
+        .catch((err) => {
+          console.error("Failed to fetch products:", err);
+          return [];
         }),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/customers`, { credentials: "include" }).then((r) => r.json()),
     ]).then(([meta, productsData, customersData]) => {
@@ -145,7 +150,7 @@ export default function CreateInvoiceModal({
     });
   }, [invoice]);
 
-  /* ================= CALCULATIONS (UNCHANGED) ================= */
+  /* ================= CALCULATIONS ================= */
 
   const calculateSplit = (item: Item) => {
     const final = item.sellingPrice * item.quantity;
@@ -479,8 +484,7 @@ export default function CreateInvoiceModal({
                           }}
                           className="w-full bg-neutral-900/50 border border-neutral-700/50 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-3 py-2 text-sm text-white transition-all outline-none shadow-inner cursor-pointer"
                         >
-                          <option value="">Select product</option>
-                          <option value="manual">Manual Entry</option>
+                          <option value="" disabled>Select product</option>
                           {products.map((p) => (
                             <option key={p.id} value={p.id}>{p.name}</option>
                           ))}
