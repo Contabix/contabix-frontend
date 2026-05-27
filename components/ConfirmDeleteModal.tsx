@@ -19,16 +19,38 @@ export default function ConfirmDeleteModal({
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
+  try {
     setDeleting(true);
 
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/${endpoint}/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/${endpoint}/${id}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+      }
+    );
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+
+      throw new Error(
+        data?.message || "Delete failed"
+      );
+    }
 
     onDeleted();
     onClose();
-  };
+  } catch (err) {
+    console.error(err);
+    alert(
+      err instanceof Error
+        ? err.message
+        : "Delete failed"
+    );
+  } finally {
+    setDeleting(false);
+  }
+};
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
