@@ -171,8 +171,8 @@ export default function AddPurchaseModal({
         const r = Number(item.purchasePrice) || 0;
         const g = Number(item.gstPercent) || 0;
 
-        const total = parseFloat((q * r).toFixed(2));
-        const taxable = parseFloat((total / (1 + g / 100)).toFixed(2));
+        const taxable = parseFloat((q * r).toFixed(2));
+        const total = parseFloat((taxable + (g/ 100)*taxable).toFixed(2));
         const gst = parseFloat((total - taxable).toFixed(2));
 
         item.taxableValue = taxable ? String(taxable) : "";
