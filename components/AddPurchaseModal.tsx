@@ -510,6 +510,7 @@ export default function AddPurchaseModal({
                   <Input
                     label="Quantity *"
                     type="number"
+                    step="0.001"
                     value={item.quantity}
                     onChange={(v) => updateItem(index, "quantity", v)}
                     placeholder="0"
@@ -518,6 +519,7 @@ export default function AddPurchaseModal({
                   <Input
                     label="Rate (₹) *"
                     type="number"
+                    step="0.001"
                     value={item.purchasePrice}
                     onChange={(v) => updateItem(index, "purchasePrice", v)}
                     placeholder="0.00"
@@ -526,6 +528,7 @@ export default function AddPurchaseModal({
                   <Input
                     label="GST %"
                     type="number"
+                    step="0.001"
                     value={item.gstPercent}
                     onChange={(v) => updateItem(index, "gstPercent", v)}
                     placeholder="18"
@@ -534,6 +537,7 @@ export default function AddPurchaseModal({
                   <Input
                     label="Taxable (₹)"
                     type="number"
+                    step="0.001"
                     value={item.taxableValue}
                     onChange={(v) => updateItem(index, "taxableValue", v)}
                     placeholder="0.00"
@@ -542,6 +546,7 @@ export default function AddPurchaseModal({
                   <Input
                     label="Total (₹)"
                     type="number"
+                    step="0.001"
                     value={item.total}
                     onChange={(v) => updateItem(index, "total", v)}
                     placeholder="0.00"
@@ -613,12 +618,14 @@ function Input({
   onChange,
   type = "text",
   placeholder = "",
+  step,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
   placeholder?: string;
+  step?: string;
 }) {
   return (
     <div>
@@ -627,12 +634,14 @@ function Input({
       </label>
 
       <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full bg-neutral-900/50 border border-neutral-700/50 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-4 py-2.5 text-white placeholder:text-neutral-600 transition-all outline-none shadow-inner"
-      />
+  type={type}
+  value={value}
+  min={type === "number" ? "0" : undefined}
+  step={step || (type === "number" ? "0.001" : undefined)}
+  onChange={(e) => onChange(e.target.value)}
+  placeholder={placeholder}
+  className="w-full bg-neutral-900/50 border border-neutral-700/50 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-4 py-2.5 text-white placeholder:text-neutral-600 transition-all outline-none shadow-inner"
+/>
     </div>
   );
 }
