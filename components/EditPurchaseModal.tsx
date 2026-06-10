@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, AlertCircle, Plus, Trash2 } from "lucide-react";
 
 type Unit =
@@ -130,6 +130,22 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
         }))
       : [{ ...emptyItem }]
   );
+  const [existingCategories, setExistingCategories] = useState<string[]>([]);
+  const [existingProducts, setExistingProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Fetch categories
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/inventory/categories`, { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => { if (Array.isArray(data)) setExistingCategories(data); })
+      .catch(() => console.log("Failed to load categories"));
+
+    // Fetch products
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/inventory`, { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => { if (Array.isArray(data)) setExistingProducts(data); })
+      .catch(() => console.log("Failed to load products"));
+  }, []);
 
   const overallTaxable = items.reduce((sum, item) => sum + (Number(item.taxableValue) || 0), 0);
   const overallGst = items.reduce((sum, item) => sum + (Number(item.gstAmount) || 0), 0);
@@ -144,13 +160,31 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
       const newItems = [...prev];
       const item = { ...newItems[index], [key]: value };
 
+      // 🔥 THE MAGIC: Auto-fill logic when Product Name changes
+      if (key === "name") {
+        const matchedProduct = existingProducts.find(
+          (p) => p.name.toLowerCase() === value.toLowerCase()
+        );
+        
+        if (matchedProduct) {
+          // Product exists! Fill in their custom SKU and details
+          item.sku = matchedProduct.sku;
+          item.category = matchedProduct.category;
+          item.unit = matchedProduct.unit || "PIECE";
+        } else {
+          // Brand new product. Clear the SKU so it says "Auto-generated"
+          item.sku = ""; 
+        }
+      }
+
+      // Math calculations...
       if (["quantity", "purchasePrice", "gstPercent"].includes(key as string)) {
         const q = Number(item.quantity) || 0;
         const r = Number(item.purchasePrice) || 0;
         const g = Number(item.gstPercent) || 0;
 
-        const total = parseFloat((q * r).toFixed(2));
-        const taxable = parseFloat((total / (1 + g / 100)).toFixed(2));
+        const taxable = parseFloat((q * r).toFixed(2));
+        const total = parseFloat((taxable + (g / 100) * taxable).toFixed(2));
         const gst = parseFloat((total - taxable).toFixed(2));
 
         item.taxableValue = taxable ? String(taxable) : "";
@@ -162,7 +196,6 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
       return newItems;
     });
   };
-
   const addItem = () => setItems((prev) => [...prev, { ...emptyItem }]);
   
   const removeItem = (indexToRemove: number) => {
@@ -170,6 +203,15 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
   };
 
   const save = async () => {
+
+    const names = items.map((item) => item.name.trim().toLowerCase());
+    const uniqueNames = new Set(names);
+
+    if (uniqueNames.size !== names.length) {
+      setError("You cannot add the same product multiple times in one bill. Please combine the quantities into a single row.");
+      return;
+    }
+
     setSaving(true);
     setError(null);
 
@@ -202,12 +244,20 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
         }
       );
 
-      if (!res.ok) throw new Error("Update failed");
+      // 🔥 Reveal the true backend error!
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        const errorMessage = Array.isArray(errorData?.message)
+          ? errorData.message.join(", ")
+          : errorData?.message || "Update failed";
+        throw new Error(errorMessage);
+      }
 
       onUpdated();
       onClose();
     } catch (err) {
-      setError("Failed to update purchase.");
+      // 🔥 Display the error in the red UI box
+      setError((err as Error).message || "Failed to update purchase.");
     } finally {
       setSaving(false);
     }
@@ -346,23 +396,54 @@ export default function EditPurchaseModal({ purchase, onClose, onUpdated }: Prop
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  
+                  {/* Product Name Hybrid Dropdown */}
                   <div className="md:col-span-2">
-                    <Input
-                      label="Product Name *"
+                    <label className="block text-sm font-medium text-neutral-400 mb-1.5 truncate">
+                      Product Name *
+                    </label>
+                    <input
+                      list={`product-suggestions-${index}`}
                       value={item.name}
-                      onChange={(v) => updateItem(index, "name", v)}
+                      onChange={(e) => updateItem(index, "name", e.target.value)}
+                      placeholder="e.g. Urea 50kg"
+                      className="w-full bg-neutral-900/50 border border-neutral-700/50 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-4 py-2.5 text-white placeholder:text-neutral-600 transition-all outline-none shadow-inner"
                     />
+                    <datalist id={`product-suggestions-${index}`}>
+                      {existingProducts.map((p, i) => (
+                        <option key={i} value={p.name} />
+                      ))}
+                    </datalist>
                   </div>
+
+                  {/* SKU Input is now Disabled */}
                   <Input
-                    label="SKU / Barcode *"
+                    label="SKU / Barcode"
                     value={item.sku}
                     onChange={(v) => updateItem(index, "sku", v)}
+                    placeholder="Auto-generated"
+                    disabled={true} 
                   />
-                  <Input
-                    label="Category"
-                    value={item.category}
-                    onChange={(v) => updateItem(index, "category", v)}
-                  />
+
+                  {/* Category Hybrid Dropdown */}
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-400 mb-1.5 truncate">
+                      Category *
+                    </label>
+                    <input
+                      list={`category-suggestions-${index}`}
+                      value={item.category}
+                      onChange={(e) => updateItem(index, "category", e.target.value)}
+                      placeholder="Type or select..."
+                      className="w-full bg-neutral-900/50 border border-neutral-700/50 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-4 py-2.5 text-white placeholder:text-neutral-600 transition-all outline-none shadow-inner"
+                    />
+                    <datalist id={`category-suggestions-${index}`}>
+                      {existingCategories.map((cat, i) => (
+                        <option key={i} value={cat} />
+                      ))}
+                    </datalist>
+                  </div>
+
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-4 items-end">
@@ -486,6 +567,7 @@ function Input({
   type = "text",
   placeholder = "",
   step,
+  disabled = false, // 🔥 Added to props
 }: {
   label: string;
   value: string;
@@ -493,6 +575,7 @@ function Input({
   type?: string;
   placeholder?: string;
   step?: string;
+  disabled?: boolean; // 🔥 Added to TypeScript types
 }) {
   return (
     <div>
@@ -500,14 +583,15 @@ function Input({
         {label}
       </label>
       <input
-  type={type}
-  value={value}
-  min={type === "number" ? "0" : undefined}
-  step={step || (type === "number" ? "0.001" : undefined)}
-  onChange={(e) => onChange(e.target.value)}
-  placeholder={placeholder}
-  className="w-full bg-neutral-900/50 border border-neutral-700/50 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-4 py-2.5 text-white placeholder:text-neutral-600 transition-all outline-none shadow-inner"
-/>
+        type={type}
+        value={value}
+        min={type === "number" ? "0" : undefined}
+        step={step || (type === "number" ? "0.001" : undefined)}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        disabled={disabled} // 🔥 Applied to the actual HTML input
+        className="w-full bg-neutral-900/50 border border-neutral-700/50 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-4 py-2.5 text-white placeholder:text-neutral-600 transition-all outline-none shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
+      />
     </div>
   );
 }
